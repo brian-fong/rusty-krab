@@ -66,4 +66,18 @@ considered a *variant*.
   `Result` is an `Err` or returns the value if `Result` is an `Ok`.
 
 ### Chapter 3 - Common Programming Concepts
+The `let` keyword is used to define variables.
+- Variables are immutable by default. We use the `mut` keyword to make
+  a variable mutable.
+
+The `const` keyword is used to define constants.
+- Constants are absolutely immutable.
+
+The concept of *shadowing* in Rust refers to the act of declaring a
+new variable with the same name as a previous variable.
+- The `let` keyword is used to shadow an existing variable.
+- Shadowing is different than re-assigning a variable. By using
+  `let`, we are able to mutate both the variable's value and type.
+  Moreover, these transformations exist only until the variable is
+  shadowed again or the scope ends.
 
