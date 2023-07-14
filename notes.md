@@ -58,3 +58,12 @@ let mut foo = String::new();
 of a `String` type.
 - The `String` type is a growable, UTF-8 encoded bit of text
 
+A `Result` instant is an enumeration, or an *enum*, which is a type
+that can be in one of multiple possible states, each state being
+considered a *variant*.
+- `Result`'s variants are `Ok` and `Err`.
+- `Result` has a method `expect()`, which crashes the program if
+  `Result` is an `Err` or returns the value if `Result` is an `Ok`.
+
+### Chapter 3 - Common Programming Concepts
+
