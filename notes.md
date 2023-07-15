@@ -47,7 +47,7 @@ same directory.
 optimizations for the sake of faster re-compiling and re-building.
 
 
-### Chapter 2 - Guessing Game
+### Chapter 2 - A Guessing Game
 In Rust, variables are immutable by default.
 
 Creating a mutable string variable:
@@ -80,4 +80,36 @@ new variable with the same name as a previous variable.
   `let`, we are able to mutate both the variable's value and type.
   Moreover, these transformations exist only until the variable is
   shadowed again or the scope ends.
+
+### Chapter 7 - Managing Growing Projects
+In Rust, the *module system* refers to the organization of our code,
+specifying which details are exposed, which are private, and what
+names are in each scope of our code.
+
+The module system consists of:
+- *Packages*: A Cargo feature to help build, test, and share crates.
+- *Crates*: A tree of modules that produce a library or executable.
+- *Modules*: Lets us control the organization, scope, and privacy of
+  paths.
+- *Paths*: A way of naming an item, such as a struct, function, or
+  module.
+
+Crates come in 2 forms: *binary* and *library*.
+- Binary crates are programs that can be compiled to an executable,
+  such as a command-line program or a server. Each binary crate must
+  have a `main()` function explicitly defined.
+- Library crates are programs that are meant to provide functionality
+  and be shared with multiple projects. The `rand` crate is a popular
+  library that provides random number generation.
+
+The *crate root* is a source file that the Rust compiler starts from
+and creates the root module of our crate.
+- For a binary crate, the crate root file is usually `src/main.rs`;
+  whereas for a library crate, the crate root is usually `src/lib.rs`.
+
+A *package* is a bundle of crates that provides a set of
+functionality. Each package contains a `Cargo.toml` file describing
+how to build the crates included.
+- Cargo is actually a package containing the binary crate that is
+  executed when we use `cargo` commands in our terminal.
 

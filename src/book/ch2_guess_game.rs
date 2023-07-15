@@ -33,7 +33,7 @@ pub fn main() {
             }
         }
 
-        println!();
+        println!("\n");
     }
 }
 

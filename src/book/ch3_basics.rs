@@ -1,3 +1,11 @@
+pub fn main() {
+    tuples_and_arrays();
+
+    print_pair(10, "hello");
+
+    loops();
+}
+
 pub fn tuples_and_arrays() {
     // Tuples
     let tup: (i32, f32, &str) = (100, 3.14, "hello");

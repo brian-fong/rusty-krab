@@ -1,6 +1,4 @@
 pub fn convert_temp() {
-    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    // Code to convert temperature...
-    // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    println!("hello world!");
 }
 
