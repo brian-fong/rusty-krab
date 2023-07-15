@@ -1,4 +1,4 @@
-use std::io;
+use std::io::{self, Write};
 use rand::Rng;
 use std::cmp::Ordering;
 
@@ -8,7 +8,9 @@ pub fn main() {
     let sol: u32 = rand::thread_rng().gen_range(1..=100);
 
     loop {
-        println!("Guess: ");
+        print!("Guess: ");
+        io::stdout().flush()
+            .expect("Failed to flush output!");
 
         let mut guess: String = String::new();
 
