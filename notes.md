@@ -113,3 +113,12 @@ how to build the crates included.
 - Cargo is actually a package containing the binary crate that is
   executed when we use `cargo` commands in our terminal.
 
+In the crate root file, we use the `mod` keyword to declare new
+modules. We may use the `use` keyword to create shortcuts for
+importable items (constants, structs, functions).
+
+KEY: To import modules and submodules from different directories, we
+need to create a `mod.rs` file which serves as the "crate root file"
+for that given module's directory. Within this `mod.rs` file, we
+define the submodules within the directory.
+
