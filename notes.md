@@ -207,3 +207,22 @@ reference a location in memory that may have been allocated to another
 pointer. This situation often happens by freeing up some memory while
 still maintaining a pointer to said memory.
 
+In Rust, *slices* are segments of data that consist of two values: a
+pointer to the index of the original data and a length.
+
+String literals are of type `&str`, which is an immutable reference.
+Hence, string literals are immutable.
+
+In a sense, `&str` type is a superset of `String` type, since
+`&String` can be sliced, turning it into a `&str`.
+
+### Chapter 5 - Using Structs
+A *struct* is a custom data type in Rust that requires us to specify
+named values that collectively make up a meaningful group.
+- Similar to object's data attributes in object-oriented languages.
+
+In addition to structs, Rust also provides *tuple structs*, which are
+similar but do not have names associated with their fields. Rather,
+the fields of a tuple struct specifies the types of the fields.
+
+

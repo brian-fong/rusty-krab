@@ -56,8 +56,8 @@ pub fn add_word(s: &mut String) {
     s.push_str(" world!");
 }
 
-pub fn dangling_pointer() -> &String {
-    let s = String::from("hello");
-    return &s;
-}
+// pub fn dangling_pointer() -> &String {
+//     let s = String::from("hello");
+//     return &s;
+// }
 
