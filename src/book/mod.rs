@@ -1,5 +1,6 @@
-pub mod ch2_guess_game;
-pub mod ch3_basics;
-pub mod ch4_ownership;
-pub mod ch5_structs;
+pub mod chapter_2;
+pub mod chapter_3;
+pub mod chapter_4;
+pub mod chapter_5;
+pub mod chapter_6;
 

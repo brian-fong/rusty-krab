@@ -26,11 +26,11 @@ pub fn main() {
     // let length = get_length(&s);
     // println!("The length of {s} is {length}");
 
-    // // Example of using mutable references
-    // let mut s = String::from("hello");
-    // println!("s = {s}");
-    // add_word(&mut s);
-    // println!("s = {s}");
+    // Example of using mutable references
+    let mut s = String::from("hello");
+    println!("s = {s}");
+    add_word(&mut s);
+    println!("s = {s}");
     
     // // Example of dangling pointers
     // let p = dangling_pointer();
