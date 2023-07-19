@@ -1,4 +1,4 @@
-![](https://raw.githubusercontent.com/0xfrian/learn-rust/main/learn-rust-logo.png)
+![](https://raw.githubusercontent.com/0xfrian/learn-rust/main/rusty-krab-logo.png)
 
 This repository documents my efforts at trying to learn how to program in Rust. 
 
