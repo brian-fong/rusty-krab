@@ -7,7 +7,9 @@ mod book;
 // use crate::book::chapter_3::basics;
 // use crate::book::chapter_4::ownership;
 // use crate::book::chapter_5::structs;
-use crate::book::chapter_6::enums;
+// use crate::book::chapter_6::enums_1;
+// use crate::book::chapter_6::enums_2;
+use crate::book::chapter_6::patterns;
 
 // use crate::book::ch2_guess_game::main as test;
 // use crate::book::ch3_basics::main as test;
@@ -21,6 +23,8 @@ fn main() {
     // basics::main();
     // ownership::main();
     // structs::main();
-    enums::main();
+    // enums_1::main();
+    // enums_2::main();
+    patterns::main();
 }
 

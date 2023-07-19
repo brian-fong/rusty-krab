@@ -225,4 +225,5 @@ In addition to structs, Rust also provides *tuple structs*, which are
 similar but do not have names associated with their fields. Rather,
 the fields of a tuple struct specifies the types of the fields.
 
+### Chapter 7 - Packages, Crates, and Modules
 
