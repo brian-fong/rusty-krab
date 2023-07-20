@@ -1,6 +1,5 @@
-use std::io::{self, Write};
+use std::{ io, io::Write, cmp::Ordering };
 use rand::Rng;
-use std::cmp::Ordering;
 
 pub fn main() {
     println!("Guess a random number from 1 to 100!");

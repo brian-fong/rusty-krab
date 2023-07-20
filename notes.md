@@ -226,4 +226,115 @@ similar but do not have names associated with their fields. Rather,
 the fields of a tuple struct specifies the types of the fields.
 
 ### Chapter 7 - Packages, Crates, and Modules
+Rust adopts a *module system* that includes the following:
+- *Packages*: A Cargo feature that promotes building, testing, and
+  sharing crates.
+- *Crates*: A tree of modules that produces a library or executable.
+- *Paths*: A way of naming an item such as a struct, function, or
+  module.
+
+A *crate* is any amount of code that the Rust compiler processes.
+- Crates come in two forms: *binary* or *library*.
+- A *binary crate* defines a `main()` function and is compiled into an
+  executable, such as a CLI program or a server.
+- A *library crate* defines structs, functions, and more to be shared
+  with multiple projects. There is no `main()` function and does not
+  compile to an executable.
+
+A *package* is a bundle of crates that provides some functionality.
+- Each package should contain a `Cargo.toml` file to describe how to
+  build the crates within the package.
+- A package may contain multiple binary crates, but at most only one
+  library crate.
+
+The `use` keyword creates *paths*, or shortcuts, to items defined
+within other crates. These shortcuts reduce repitition of long module
+paths.
+
+The `crate root` is a source file that the Rust compiler starts
+from and makes up the root module of your crate.
+- In binary crates, the crate root is `src/main.rs` and in library
+  crates, the crate root is `src/lib.rs`.
+- `main.rs` and `lib.rs` formulate the module named `crate` at the
+  root of our *module tree*, which scopes out the structure of our
+  modules.
+- The module tree can be thought of as the filesystem in our computer.
+
+In Rust, all items (functions, methods, structs, enums, modules, and
+constants) are private by default. We use the `pub` keyword to make an
+item public and accessible from another file.
+
+### Chapter 8 - Common Collections
+*Collections* are data structures used to store multiple values.
+Unlike the built-in `array` and `tuple` types, collections are stored
+on the heap, which means the amount of data may be unknown at compile
+time, and may grow or shrink as the program runs. There are many
+different types of collections:
+- A *vector* stores a variable number of values next to each other.
+- A *string* is a collection of characters (`String` type).
+- A *hash map* allows us to associate a value with a particular key.
+
+Type annotations are necessary in Rust when the compiler is unable to
+infer what type the value should be. In most cases, we would be
+specifying an initial value of some sort, from which the Rust compiler
+may infer the variable type. However, in the absence of an initial
+value, we must apply explicit type annotation.
+- Note: type inference may also occur when we mutate the variable by
+  assigning a value of a certain type to it.
+
+Rust allows mutable and immutable iteration over a vector. The
+reference to the vector in the for-loop works to prevent simultaneous
+modification of the whole vector. That is, we may change individual
+elements of the vector without issue, but we will encounter a compiler
+error when we attempt to insert or remove items from the whole vector.
+
+Vectors are data structures that may contain only one type. Enums work
+hand-in-hand with vectors in that enums provide variants and each enum
+variant is still considered to be the same enum type. Hence, Rust
+allows vectors to store values of different types as long as they all
+are variants of the same enum type.
+
+Note: when a vector variable goes out of scope, the vector as well as
+its contents are dropped. Moreover, the borrow checker ensures that
+any references to the contents of the vector are only used while the
+vector itself is valid.
+
+In Rust, strings are implemented as a collection of bytes accompanied
+with some methods to provide useful functionality in the context of
+interpreting these bytes as text.
+
+Note: The `str` type is the only string type in Rust's core language.
+The `String` type is provided by the standard library. Both `str` and
+`String` types are UTF-8 encoded.
+
+The `String` class is actually implemented as a wrapper around a
+vector of bytes with additional guarantees, restrictions, and
+functionality.
+- In other words, `String` type is a superset of `Vec<T>`.
+
+Rust strings do NOT support indexing like in most other programming
+languages. The reason behind this design is due to the fact that all
+strings are encoded in UTF-8, and some Unicode characters occupy 1 or
+2 bytes of storage. This variation results in potentially invalid or
+unexpected outcomes such as returning the byte value for an index
+that is part of a two-byte character.
+- Hence, Rust asks us to be more specific by defining a range of
+  indices to create a string slice containing specific bytes.
+- Warning: even specifying a range of indices may lead to
+  conflicts, particularly when we cut off a multi-byte character.
+
+*Hash maps* are useful data structures when we wish to look up data
+not by using an index but with a key of some type.
+- Other programming languages implement hash maps but often use a
+  different name such as hash, map, object, hash table, dictionary, or
+  associative array.
+- Hash maps are NOT included in the prelude; we must explicitly
+  include hash maps into the scope by importing `use
+  std::collections::HashMap`.
+- Hash maps are stored on the heap.
+- Hash maps must be homogeneous, meaning all keys must be of one type
+  and all values must be of one type.
+- Hash maps do not accept references because the values that these
+  references point to must be valid for at least as long as the hash
+  map is valid.
 

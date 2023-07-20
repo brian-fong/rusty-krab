@@ -1,30 +1,21 @@
 #![allow(dead_code)]
+#![allow(unused_imports)]
 
 mod book;
-// mod side_quests;
+mod side_quests;
 
-// use crate::book::chapter_2::guess_game;
-// use crate::book::chapter_3::basics;
-// use crate::book::chapter_4::ownership;
-// use crate::book::chapter_5::structs;
-// use crate::book::chapter_6::enums_1;
-// use crate::book::chapter_6::enums_2;
+use crate::book::chapter_2::guess_game;
+use crate::book::chapter_3::basics;
+use crate::book::chapter_4::ownership;
+use crate::book::chapter_5::structs;
+use crate::book::chapter_6::enums;
 use crate::book::chapter_6::patterns;
+use crate::book::chapter_8::vectors;
+use crate::book::chapter_8::strings;
+use crate::book::chapter_8::hashmaps;
 
-// use crate::book::ch2_guess_game::main as test;
-// use crate::book::ch3_basics::main as test;
-// use crate::book::ch4_ownership::main as test;
-
-// use crate::side_quests::temperature::main as test;
-// use crate::side_quests::fibonacci::main as test;
 
 fn main() {
-    // guess_game::main();
-    // basics::main();
-    // ownership::main();
-    // structs::main();
-    // enums_1::main();
-    // enums_2::main();
-    patterns::main();
+    hashmaps::main();
 }
 
