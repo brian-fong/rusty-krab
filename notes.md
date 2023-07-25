@@ -338,3 +338,43 @@ not by using an index but with a key of some type.
   references point to must be valid for at least as long as the hash
   map is valid.
 
+### Chapter 8 - Error Handling
+Rust groups errors into two major categories: *recoverable* and
+*unrecoverable*
+
+Recoverable errors are handled with a warning to the programmer and
+re-attempting the operation; whereas unrecoverable errors are handled
+by immediately stopping the program.
+- Note: most languages cast a wide net by handling all errors using
+  the same mechanism, such as exceptions.
+- E.g. If we try to read a file the doesn't exist, instead of stopping
+  the program completely, we might want to create the file instead.
+
+There are no "exceptions" in Rust. Instead, Rust provides the
+  `Result<T, E>` type for recoverable errors, and the `panic!` macro
+  for unrecoverable errors.
+
+To enable *backtracing* in Rust, we can include the following in our
+code: 
+```rust
+env::set_var("RUST_BACKTRACE", "1");
+```
+
+The `Result` enum is defined as having two variants: `Ok` and `Err`.
+```rust
+enum Result {
+    Ok(T),
+    Err(E),
+}
+```
+Above, `T` and `E` represent the types of values returned in the
+success and error case, respectively.
+
+We often use the `match` statement to handle the two different
+outcomes of the `Result` type.
+
+When it comes to deciding to return either call `panic!` or to return
+a `Result`, it is better practice to return a `Result` since the
+calling code would then have the option to handle the error or call
+`panic!`.
+

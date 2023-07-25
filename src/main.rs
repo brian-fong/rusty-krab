@@ -13,9 +13,11 @@ use crate::book::chapter_6::patterns;
 use crate::book::chapter_8::vectors;
 use crate::book::chapter_8::strings;
 use crate::book::chapter_8::hashmaps;
+use crate::book::chapter_9::errors;
+use crate::book::chapter_9::guess_game_v2;
 
 
 fn main() {
-    hashmaps::main();
+    guess_game_v2::main();
 }
 
