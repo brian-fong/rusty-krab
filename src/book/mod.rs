@@ -1,10 +1,9 @@
-pub mod chapter_2;
-pub mod chapter_3;
-pub mod chapter_4;
-pub mod chapter_5;
-pub mod chapter_6;
-pub mod chapter_8;
-pub mod chapter_9;
+pub mod chapter_02;
+pub mod chapter_03;
+pub mod chapter_04;
+pub mod chapter_05;
+pub mod chapter_06;
+pub mod chapter_08;
+pub mod chapter_09;
+pub mod chapter_10;
 pub mod utils;
-
-

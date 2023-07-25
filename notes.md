@@ -378,3 +378,47 @@ a `Result`, it is better practice to return a `Result` since the
 calling code would then have the option to handle the error or call
 `panic!`.
 
+### Chapter 10 - Generic Types, Traits, and Lifetimes
+In Rust, *generics* are abstract stand-ins for concrete types that
+allow us to define their behavior, by defining *traits*, without
+necessarily knowing what data will be in their place during
+compile-time and run-time.
+- Rust also provides *lifetimes*, which allows us to tell the compiler
+  about borrowed values and help ensure the validity of references in
+  various situations.
+
+Note: up until now, we've dealt with built-in Rust generics such as
+`Option<T>`, `Vec<T>`, `HashMap<K, V>`, and `Result<T, E>`.
+
+Note: when defining a generic struct, we may also define specific methods
+for certain types.
+
+A type's behavior is defined by the methods we may call on that type.
+Different types share the same behavior if we may call the same
+methods on all those types. Traits are a way to group method
+signatures together to define a set of behaviors.
+
+Note: keep in mind, we may implement a trait on a type only if either
+the trait or the type is local to our crate. Otherwise, we would have
+conflicting traits applied to the same type, which Rust wouldn't know
+which behavior to implement.
+
+When implementing methods for a given trait, we may choose to define a
+default behavior or instead require explicit implementations for all
+methods on every type.
+
+Rust implements a set of rules for how the compiler infers lifetimes.
+These *lifetime elision rules* are:
+1. The compiler assigns a lifetime parameter to each function argument
+   that's a reference.
+    - Example:
+    ```rust
+    fn foo<'a>(x: &'a i32) {}
+
+    fn foo<`a, `b>(x: &`a i32, y: &'b i32) {}
+    ```
+2. If there is exactly one input lifetime parameter, that lifetime
+   is assigned to all output lifetime parameters.
+3. If there are multiple input lifetime parameters, but one of them is
+   `&self` or `&mut self`, then the lifetime of `self` is assigned to
+   all output lifetime parameters.
