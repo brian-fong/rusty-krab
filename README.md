@@ -17,4 +17,3 @@ Format: `<emoji> <category> [<scope>]: <message>`
 | 🐛 fix        | when fixing bugs                                        |
 | 🎨 styles     | when changing styling of UI elements                    |
 | 🔁 refactor   | when refactoring source code                            |
-| 🧠 learn      | when adding code or docs for learning purposes          |
