@@ -1,5 +1,5 @@
 [package]
-name = "learn-rust"
+name = "rusty-krab"
 version = "0.1.0"
 authors = ["frian 0xfrian@gmail.com"]
 edition = "2021"

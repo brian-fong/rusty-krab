@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fs;
 use std::process;
 
-use learn_rust::Config;
+use rusty_krab::Config;
 
 pub fn main() {
     let args: Vec<String> = env::args().collect();
@@ -15,7 +15,7 @@ pub fn main() {
 
     println!("Searching {} for {}\n", config.file_path, config.query);
 
-    if let Err(error) = learn_rust::run(config) {
+    if let Err(error) = rusty_krab::run(config) {
         eprintln!("Application Error: {error:#?}");
         process::exit(1);
     }
