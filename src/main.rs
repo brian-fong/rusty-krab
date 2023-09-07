@@ -22,7 +22,8 @@ use crate::book::chapter_10::lifetimes;
 use crate::book::chapter_11::tests;
 use crate::book::chapter_11::guess_game_v3;
 use crate::book::chapter_12::minigrep;
+use crate::book::chapter_13::closures;
 
 fn main() {
-    minigrep::main();
+    closures::main();
 }
