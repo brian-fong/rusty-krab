@@ -1,1 +1,5 @@
+# Ignore target directory
 /target
+
+# Ignore todo
+todo.md
