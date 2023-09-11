@@ -1,9 +1,9 @@
-use rusty_krab::run;
+use rusty_krab::start;
 use std::net::TcpListener;
 
 #[tokio::test]
 async fn check_health() {
-    let address = spawn_app();
+    let address = start_background();
 
     let  client = reqwest::Client::new();
 
@@ -17,12 +17,12 @@ async fn check_health() {
     assert_eq!(Some(0), response.content_length());
 }
 
-fn spawn_app() -> String {
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .expect("Failed to bind to random port");
+fn start_background() -> String {
+    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let port = listener.local_addr().unwrap().port();
-    let server = run(listener).expect("Failed to bind address");
-    let _ = tokio::spawn(server);
+
+    let server = start(listener).expect("Failed to bind address");
+    tokio::spawn(server);
 
     format!("http://127.0.0.1:{}", port)
 }

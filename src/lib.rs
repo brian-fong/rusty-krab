@@ -6,7 +6,7 @@ async fn check_health() -> HttpResponse {
     HttpResponse::Ok().finish()
 }
 
-pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
+pub fn start(listener: TcpListener) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(|| {
             App::new()
                 .route("/checkhealth", web::get().to(check_health))
