@@ -379,3 +379,163 @@ function(s) within our binary's `main` function.
   our usecase, we'll use [reqwest](https://docs.rs/reqwest/latest/reqwest/).
     - To install `reqwest`, we'll add it under the
     `[dev-dependencies]` section in our `Cargo.toml` file.
+
+- We'll use `std::net::TcpListener` to create a TCP socket server,
+which can listen for connections.
+    - We may then bind our HTTP server to listen to this TCP socket,
+    using the built-in `listen` method.
+    - Note: we will use [port 0](https://www.lifewire.com/port-0-in-tcp-and-udp-818145) to find a random, available port number.
+
+### Working with HTML Forms
+- A user who wishes to subscribe to our email newsletter must provide
+their email address. In addition, we'll also prompt them for a "name"
+field to establish some sense of identity.
+- This information will be collected through an HTML form embedded on
+the web page and sent to our HTTP server via a POST request. The body
+of the POST request will be *encoded* using
+`application/x-www-form-urlencoded`.
+    - Note: for [*URL-encoding*](https://www.w3schools.com/tags/ref_urlencode.ASP), data is organized into key-value
+    tuples, each separated by an `&` symbol, and non-alphanumeric
+    characters are *percent-encoded*.
+
+### Test: `/subscribe`
+- We'll adopt a system where if the name and username fields are
+defined, then the backend should return a `200` OK. Otherwise, if
+either field is missing, the backend should return a `400` BAD
+REQUEST.
+    - For POST requests with missing fields, we can implement
+    *table-driven tests* (i.e. *parametrized tests*), which basically
+    involves running the same test assertion against a collection of
+    examples that we expect to all fail in the same way.
+
+### Extractors
+*Extractors* are used to tell the framework to extract certain pieces
+of information from an incoming request. `actix-web` provides several
+extractors out of the box to cater for the most common usecases such
+as URL query parameters or JSON-encoded request body. In our case,
+we'll be using the `Form` extractor to extract URL-encoded data.
+
+To use an extractor, we pass it as an argument to a handler function.
+
+An extractor is a type that implements the `FromRequest` trait. This
+trait includes a method `from_request`, which takes in the head and
+payload of incoming HTTP requests, and attempts to extract its data.
+If extraction succeeds, then it returns `Self`, otherwise it returns
+an error type.
+- This design means that all arguments in the signature of a route
+handler must implement the `FromRequest` trait.
+- The `from_request` function will be invoked for each argument. If
+extraction succeeds for all arguments, then it will run the actual
+handler function. This is extremely convenient as our handler function
+doesn't have to deal with the raw incoming request, but instead work
+with strongly-typed data.
+- Within the `from_request` function, there is a call to
+`serde_urlencoded::from_bytes` which does the heavy lifting for
+(de)serializing the data from a contiguous slice of bytes into an
+instance of type `T` according to the rules of URL-encoded format:
+keys and values are separated by "&" with an "=" between, while
+non-alphanumeric characters are percent-encoded.
+
+### Serialization in Rust (Serde)
+*Serde* is a framework for serializing and deserializing Rust data
+structures efficiently and generically.
+- `serde` does not, by itself, provide support for (de)serialization
+from/to any specific data format (e.g. JSON, Avro, or MessagePack).
+- `serde` defines a set of *interfaces*, or a *data model*.
+
+In order to support serialization for a new data format, we must
+build a library that implements the `Serializer` trait.
+- Each method on the `Serializer` trait corresponds to one of the 29
+types that formulate `serde` data model. In addition, the `Serialize`
+trait specifies how these types should map to our new data format
+using the methods available on the `Serializer` trait.
+- This design allows `serde` to be agnostic, or generic, with respect
+to data formats so long as our library implements the `Serializer`
+trait.
+
+Note: the Rust compiler implements *monomorphization* for generic
+functions, creating a copy of the function body and replacing the
+generic type parameters with concrete types. The result is no
+different than us writing down separate functions for each type.
+
+Conveniently, `#[derive(Serialize)]` and `#[derive(Deserialize)]` are
+procedural macros that parse the definition of our data type and
+generates the appropriate `Serialize` implementation.
+
+### Choosing a Database
+A general rule of thumb is to use a *relational database*.
+
+The offering for databases has exploded in the last 20 years.
+- The NoSQL movement brought about document-stores (e.g. *MongoDB*),
+key-value stores (e.g. *AWS DynamoDB*), and graph databases (e.g.
+*Neo4J*).
+- There are also databases that use RAM as their primary storage (e.g.
+*Redis*), and ones that are optimized for analytical queries via
+columnar storage (e.g. *AWS RedShift*).
+- For relational databases, we have options such as *AWS Aurora*,
+*Google Spanner*, and *CockroachDB*.
+
+For our usecase, we'll choose *PostgreSQL*.
+- For using PostreSQL in Rust, we have the following crates:
+`tokio-postgres`, `sqlx`, and `diesel`.
+
+Choosing which database framework boils down to the following topics:
+(1) compile-time safety; (2) SQL-first vs DSL for query building; and
+(3) async vs sync interface.
+- Compile-time safety: when interacting with a relational database, it
+is fairly easy to make mistakes. In most programming languages, these
+mistakes occur at runtime, where we attempt to execute our query, the
+database rejects it, and an error/exception is thrown. Ideally, we'd
+like to detect these errors at compile-time.
+    - `tokio-postgres` does not provide means for us to detect errors
+      during compile-time.
+    - `diesel` provides a CLI to generate a database schema as Rust
+    code, which is used to check assumptions on our queries.
+    - `sqlx` uses procedural macros to check if the provided query is
+      indeed sound.
+- Query interface: `tokio-postgres` and `sqlx` expect us to use SQL
+directly to write our queries.
+    - `diesel` provides its own query builder where queries are
+    represented as Rust types with build-in methods to facilitate
+    operations such as filters, joins, and more. This design is often
+    referred to as *domain specific language* (DSL).
+- Async interface: since our database is not hosted on the same
+physical machine as our application, we need to make network calls.
+Async support does not reduce the processing time for a single query,
+but it does allow our application to leverage all CPU cores to perform
+other meaningful work while waiting for the database to return results
+for a query.
+    - Both `sqlx` and `tokio-postgres` provide asynchronous interfaces
+      while `diesel` is only synchronous.
+
+In conclusion, we'll choose `sqlx`.
+
+Moving on, we'd like to write a test to see that a valid POST request
+sent to `/subscriptions` does indeed result in a new user on our list
+of subscriptions. In order to test this, we must be able to access the
+list of subscribers. Instead of writing a dedicated GET endpoint,
+we'll simply query the database directly for our test case (We'll
+eventually create the GET endpoint, along with the security measures
+to prevent public access to the names and emails of our subscribers).
+
+### Database Setup
+In order to run queries for our test suite, we'll need a running
+Postgres instance and a table to store subscriptions.
+- To run Postgres, we'll create a new Docker container using the
+offical Postgres Docker image.
+
+Docker Installation:
+- `sudo pacman -S docker`
+- `systemctl enable docker`
+- `systemctl start docker`
+- Reboot machine
+
+PostgreSQL Installation:
+- `docker pull postgres`: to install postgres image from Docker Hub
+- `sudo pacman -S postgresql`: to install postgres and psql CLI tools
+
+After installing Docker and PostgreSQL, let's write bash script to set
+up our Docker container along with our database.
+- We use the `docker run postgres` command to launch a new Docker
+container loaded with a PostgreSQL image, setting up a database with
+the pre-assigned environmental variables.
