@@ -1,5 +1,5 @@
 use std::net::TcpListener;
-use rusty_krab::start;
+use rusty_krab::startup::*;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

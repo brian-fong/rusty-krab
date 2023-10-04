@@ -1,9 +1,10 @@
-use rusty_krab::start_background;
+use rusty_krab::startup::start_background;
+
 
 #[tokio::test]
 async fn check_health() {
     let addr = start_background();
-    let route = format!("{}/checkhealth", addr);
+    let route = format!("{}/check_health", addr);
 
     let client = reqwest::Client::new();
 
