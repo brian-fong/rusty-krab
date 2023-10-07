@@ -1,5 +1,5 @@
 use crate::configuration::{get_config, DatabaseSettings};
-use crate::routes::*;
+use crate::routes::{check_health, subscriptions};
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
 use sqlx::{PgPool, PgConnection, Connection, Executor};

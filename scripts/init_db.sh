@@ -43,21 +43,14 @@ until psql \
   -U ${DB_USER} \
   -p ${DB_PORT} \
   -d ${DB_NAME} \
-  -c "\q" \
-  2>/dev/null; do
+  -c "\q" &>/dev/null; do
     >&2 echo "Postgres is loading..."
     sleep 1
 done
 
->&2 echo "Postgres is up and running on port: ${DB_PORT}"
+echo "Postgres is up and running on port: ${DB_PORT}"
 
 export DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}"
 
-# Create postgres database
-# sqlx database create
-
 # Run migrations
 sqlx migrate run
-
-# # Stop and remove all containers
-# docker ps -aq | xargs docker stop | xargs docker rm 2>/dev/null
