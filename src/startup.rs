@@ -1,6 +1,7 @@
 use crate::configuration::{get_config, DatabaseSettings};
 use crate::routes::{check_health, subscriptions};
 use actix_web::dev::Server;
+use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use sqlx::{PgPool, PgConnection, Connection, Executor};
 use uuid::Uuid;
@@ -15,6 +16,7 @@ pub fn start(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Err
     let pool = web::Data::new(pool);
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .route("/check_health", web::get().to(check_health))
             .route("/subscriptions", web::post().to(subscriptions))
             .app_data(pool.clone())
@@ -29,7 +31,7 @@ pub async fn start_background() -> TestApp {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());
 
-    // Connect to database
+    // Create new database (and connect to it)
     let mut config = get_config().expect("Failed to read configuration");
     config.database.db_name = Uuid::new_v4().to_string();
     let pool = init_db(&config.database).await;

@@ -13,6 +13,13 @@ pub async fn subscriptions(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>
 ) -> HttpResponse {
+    let request_id = Uuid::new_v4();
+    log::debug!(
+        "Request #{}: new subscription: {} ({})...",
+        request_id, form.name, form.email
+    );
+
+    // Insert new entry into database
     match sqlx::query!(
         r#"
         INSERT INTO subscriptions(id, email, name, subscribed_at)
@@ -26,9 +33,19 @@ pub async fn subscriptions(
     .execute(pool.get_ref())
     .await
     {
-        Ok(_) => HttpResponse::Ok().finish(),
+        Ok(_) => {
+            log::debug!(
+                "Request #{}: subscription created successfully",
+                request_id
+            );
+            HttpResponse::Ok().finish()
+        },
         Err(e) => {
-            println!("Failed to execute query: {}", e);
+            log::error!(
+                "Request #{}: failed to execute query: {:#?}",
+                request_id,
+                e
+            );
             HttpResponse::InternalServerError().finish()
         }
     }
