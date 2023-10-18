@@ -8,7 +8,7 @@ use std::net::TcpListener;
 async fn main() -> std::io::Result<()> {
     // Enable logging
     env_logger::Builder::from_env(
-        Env::default().default_filter_or("debug")
+        Env::default().default_filter_or("info")
     ).init();
 
     // Read configuration
@@ -24,6 +24,6 @@ async fn main() -> std::io::Result<()> {
         .expect("Failed to connect to Postgres");
 
     // Start server
-    log::debug!("Starting server: [http://{}]...", addr);
+    log::info!("Starting server: [http://{}]...", addr);
     start(listener, pool)?.await
 }
