@@ -16,8 +16,13 @@ pub struct DatabaseSettings {
 }
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
+    // Initialize configuration reader
     let mut settings = config::Config::default();
+
+    // Read configuration file named "configuration"
     settings.merge(config::File::with_name("configuration"))?;
+
+    // (Try to) convert values from configuration file into resulting type
     settings.try_into()
 }
 
