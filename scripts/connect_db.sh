@@ -4,8 +4,8 @@ set -eo pipefail
 
 # Postgres credentials
 HOST="localhost"
-DB_USER=${POSTGRES_USER:=postgres}
-DB_PASSWORD=${POSTGRES_PASSWORD:=password}
+DB_USER=${POSTGRES_USER:=frian}
+DB_PASSWORD=${POSTGRES_PASSWORD:=asdf}
 DB_NAME=${POSTGRES_DB:=newsletter}
 DB_PORT=${POSTGRES_PORT:=5432}
 

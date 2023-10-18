@@ -3,8 +3,8 @@
 set -eo pipefail
 
 # Postgres credentials
-DB_USER=${POSTGRES_USER:=postgres}
-DB_PASSWORD=${POSTGRES_PASSWORD:=password}
+DB_USER=${POSTGRES_USER:=frian}
+DB_PASSWORD=${POSTGRES_PASSWORD:=asdf}
 DB_NAME=${POSTGRES_DB:=newsletter}
 DB_PORT=${POSTGRES_PORT:=5432}
 
@@ -16,8 +16,8 @@ then
     -e POSTGRES_USER=${DB_USER} \
     -e POSTGRES_PASSWORD=${DB_PASSWORD} \
     -e POSTGRES_DB=${DB_NAME} \
-    -p "${DB_PORT}:5432" \
-    -d postgres \
+    -p "${DB_PORT}:${DB_PORT}" \
+    -d \
     postgres -N 1000
   )
   echo "Container ID: $container_id"
@@ -50,7 +50,11 @@ done
 
 echo "Postgres is up and running on port: ${DB_PORT}"
 
+# Define postgres connection url
 export DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}"
+
+# Create database (not necessary since docker run alredy created one)
+# sqlx database create
 
 # Run migrations
 sqlx migrate run
