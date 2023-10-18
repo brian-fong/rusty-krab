@@ -75,6 +75,15 @@ for security vulnerabilities.
 - For our CI pipeline, we would like to reject a commit if `clippy`
 emits any warnings or if `rustfmt` detects unformatted code.
 
+The most popular CI providers include:
+- [GitHub Actions](https://github.com/features/actions)
+- [Circle CI](https://circleci.com/)
+- [GitLab CI](https://docs.gitlab.com/ee/ci/)
+- [Travis](https://www.travis-ci.com/)
+
+### Set Up GitHub Actions
+We will be using GitHub Actions as our CI provider.
+
 
 ## Chapter 2 - Building an Email Newsletter
 ---
@@ -532,10 +541,87 @@ Docker Installation:
 
 PostgreSQL Installation:
 - `docker pull postgres`: to install postgres image from Docker Hub
-- `sudo pacman -S postgresql`: to install postgres and psql CLI tools
+- `sudo pacman -S postgresql`: to install postgres and `psql` CLI tools
 
-After installing Docker and PostgreSQL, let's write bash script to set
-up our Docker container along with our database.
-- We use the `docker run postgres` command to launch a new Docker
-container loaded with a PostgreSQL image, setting up a database with
-the pre-assigned environmental variables.
+After installing Docker and PostgreSQL, let's write a bash script to
+set up our database and connect to it. Here's the order of operations:
+1. Define environmental variables for our Postgres instance:
+   `DB_USER`, `DB_PASS`, `DB_NAME`, and `DB_PORT`.
+2. Use `docker run postgres` command to create new Docker container loaded with a PostgreSQL image.
+    - The properties of this container are set by the environmental
+    variables that we defined earlier.
+    - This command automatically creates a database ("newsletter")
+    within our Postgres instance.
+3. Use `psql` command to connect to our database: newsletter.
+    - In order to connect to a database, we must know the database
+    name, host name + server port number, and user name.
+    - We use an until-loop to continuously attempt to connect since
+    Docker can take some time to finish spinning up the container.
+4. Use `sqlx migrate run` command to run our migrations, creating the
+   "subscriptions" table.
+    - This command requires an environmental variable named
+    `DATABASE_URL` in order to connect to our newsletter database.
+
+Note: we don't need to run `sqlx database create` since we already
+created our newsletter database when we ran `docker container run`.
+- Q: Is there a way we can spin up our Docker container without
+pre-defining a database? This method might be more flexible.
+
+However, in order to run our migrations, we need to define a *schema*
+to create a new *table* to store users' subscriptions.
+- Run `sqlx migrate add create_subscriptions_table` to begin defining
+  a new schema, and thus a new table.
+- After running the above command, we should see a new top-level
+directory named `migrations`. There should be a new file named
+"{timestamp}_create_subscriptions_table.sql". Within this file is
+where we'll write the SQL code to outline our migration.
+- After defining a schema, we run `sqlx migrate run` to run the
+migrations. After this, we should be able to use `psql` to connect to
+our newsletter database and see a table named "subscriptions".
+
+### Connecting to PostgreSQL Database in Rust
+The simplest entrypoint to connect to a Postgres database is through
+the `PgConnection` struct, which provides a `connect` method,
+prompting us for a connection string in order to authenticate our
+connection to the database.
+- How should we go about managing the connection string? We could
+hard-code the string somewhere in our app and import it wherever
+needed.
+
+#### Configuration Management
+Alternatively, instead of hard-coding a connection string, we could
+take it one step further by implementing some level of configuration
+management for our project overall.
+- Using the `config` crate, we can define some configuration file(s)
+to better manage the behaviour of our application. We create a new
+configuration file, `configuration.rs`, within the top-level of our
+project.
+
+Our configuration file will contain a `Settings` struct to store two
+important settings for our app: the server port (8000) and the
+database connection parameters (username, password, port, host, and
+database name).
+- We'll define a `get_config` function within `configuration.rs` to
+read our configuration file and return its contents as a `Settings`
+struct. We will be using `get_config` within `main.rs` to start our
+server on the right port and connect to our Postgres database using
+the right connection string.
+
+### Query Macros
+The `sqlx::query!` macro takes in a string literal representing a SQl
+query and returns an anonymous record type: a struct defined at
+compile-time whose members represent the columns of the table
+(`result.email` for the email column).
+- `sqlx-cli` commands, including the `query!` macro, rely on
+`DATABASE_URL` as an environmental variable containing the connection
+string in order to know where to find the database and execute SQL
+queries.
+- To define this environmental variable, we create a top-level `.env`
+  file, defining the `DATABASE_URL` variable.
+- Note: it can be a bit dirty how we're saving the database URL
+(i.e. connection string) in two different places: `configuration.yaml`
+and `.env`. However, this is tolerable for now since
+`configuration.yaml` will be the main configuration file used to set
+the runtime behavior of our application after compilation; whereas
+`.env` will be used only for development processes, building, and
+testing.
