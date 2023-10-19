@@ -40,14 +40,16 @@ jobs:
 
       - name: Install sqlx-cli
         run: |
-          cargo install sqlx-cli
-          --version ${{ env.SQLX_VERSION }}
-          --features ${{ env.SQLX_FEATURES }}
-          --no-default-features
-          --lock
+          cargo install sqlx-cli \
+          --version ${{ env.SQLX_VERSION }} \
+          --features ${{ env.SQLX_FEATURES }} \
+          --no-default-features \
+          --lock \
 
       - name: Install postgresql client
-        run: sudo apt-get update && sudo apt-get install postgresql-client -y
+        run: |
+          sudo apt-get update
+          sudo apt-get install postgresql-client -y
 
       - name: Initialize postgres database
         run: |
