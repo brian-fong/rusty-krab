@@ -2,9 +2,9 @@ use rusty_krab::startup::start_background;
 
 #[tokio::test]
 async fn check_health() {
-    let client = reqwest::Client::new();
     let app = start_background().await;
 
+    let client = reqwest::Client::new();
     let response = client
         .get(format!("{}/check_health", &app.address))
         .send()

@@ -3,10 +3,11 @@
 set -eo pipefail
 
 # Postgres credentials
-DB_USER=${POSTGRES_USER:=frian}
-DB_PASSWORD=${POSTGRES_PASSWORD:=asdf}
-DB_NAME=${POSTGRES_DB:=newsletter}
-DB_PORT=${POSTGRES_PORT:=5432}
+HOST=localhost
+DB_USER=postgres
+DB_PASSWORD=password
+DB_NAME=newsletter
+DB_PORT=5432
 
 # Launch docker container with postgres image
 if [[ -z "${SKIP_DOCKER}" ]]
@@ -39,7 +40,7 @@ fi
 # Keep pinging postgres until it's ready to accept commands
 export PGPASSWORD=${DB_PASSWORD}
 until psql \
-  -h "localhost" \
+  -h ${HOST} \
   -U ${DB_USER} \
   -p ${DB_PORT} \
   -d ${DB_NAME} \
@@ -54,7 +55,9 @@ echo "Postgres is up and running on port: ${DB_PORT}"
 export DATABASE_URL="postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}"
 
 # Create database (not necessary since docker run alredy created one)
-# sqlx database create
+echo "Creating database..."
+sqlx database create
 
 # Run migrations
+echo "Running migrations..."
 sqlx migrate run

@@ -49,6 +49,7 @@ pub async fn init_db(config: &DatabaseSettings) -> PgPool {
     let mut connection = PgConnection::connect(&config.cstring_alt())
         .await
         .expect("Failed to connect to Postgres");
+
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.db_name).as_str())
         .await
