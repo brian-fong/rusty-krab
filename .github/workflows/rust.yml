@@ -44,7 +44,7 @@ jobs:
           --version ${{ env.SQLX_VERSION }} \
           --features ${{ env.SQLX_FEATURES }} \
           --no-default-features \
-          --lock \
+          --locked \
 
       - name: Install postgresql client
         run: |
