@@ -16,7 +16,7 @@ then
   container_id=$(docker run \
     -e POSTGRES_USER=${DB_USER} \
     -e POSTGRES_PASSWORD=${DB_PASSWORD} \
-    # -e POSTGRES_DB=${DB_NAME} \
+    -e POSTGRES_DB=${DB_NAME} \
     -p "${DB_PORT}:${DB_PORT}" \
     -d \
     postgres -N 1000
