@@ -18,11 +18,11 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:14
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
-          POSTGRES_DB: postgres
+          POSTGRES_DB: newsletter
         ports:
           - 5432:5432
 
@@ -54,7 +54,7 @@ jobs:
       - name: Initialize postgres database
         run: |
           chmod +x ./scripts/init_db.sh
-          ./scripts/init_db.sh
+          SKIP_DOCKER=true ./scripts/init_db.sh
 
       - name: Run tests
         run: cargo test --verbose
