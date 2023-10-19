@@ -30,6 +30,14 @@ jobs:
       - name: Checkout branch
         uses: actions/checkout@v4
 
+      - name: Install rustup toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install rust cache
+        uses: Swatinem/rust-cache@v2.7.0
+        with:
+          key: sqlx-${{ env.SQLX_VERSION }}
+
       - name: Install sqlx-cli
         run: |
           cargo install sqlx-cli
