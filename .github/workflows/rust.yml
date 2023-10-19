@@ -1,4 +1,4 @@
-name: Rust
+name: zero-to-production
 
 on:
   push:
@@ -8,26 +8,43 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  SQLX_VERSION: 0.7.1
+  SQLX_FEATURES: "rustls, postgres"
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
 
     steps:
       - name: Checkout branch
         uses: actions/checkout@v4
+
+      - name: Install sqlx-cli
+        run: |
+          cargo install sqlx-cli
+          --version=${{ env.SQLX_VERSION }}
+          --features ${{ env.SQLX_FEATURES }}
+          --no-default-features
+          --lock
+
+      - name: Install postgresql client
+        run: sudo apt-get update && sudo apt-get install postgresql-client -y
 
       - name: Initialize postgres database
         run: |
           chmod +x ./scripts/init_db.sh
           ./scripts/init_db.sh
 
-      - name: Build
-        run: cargo build --verbose
-
       - name: Run tests
         run: cargo test --verbose
-
-
-
