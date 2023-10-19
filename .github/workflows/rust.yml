@@ -15,9 +15,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Checkout branch
+        uses: actions/checkout@v4
+
+      - name: Initialize postgres database
+        run: |
+          chmod +x ./scripts/init_db.sh
+          ./scripts/init_db.sh
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Run tests
+        run: cargo test --verbose
+
+
 
