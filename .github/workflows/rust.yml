@@ -12,8 +12,7 @@ env:
   SQLX_FEATURES: "rustls,postgres"
 
 jobs:
-  test:
-
+  actix_web_test:
     runs-on: ubuntu-latest
 
     # services:
