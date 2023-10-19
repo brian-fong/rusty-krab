@@ -49,10 +49,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install postgresql-client -y
 
-      - name: Initialize postgres database
-        run: |
-          chmod +x ./scripts/init_db.sh
-          ./scripts/init_db.sh
+      # - name: Initialize postgres database
+      #   run: |
+      #     chmod +x ./scripts/init_db.sh
+      #     ./scripts/init_db.sh
 
       - name: Run tests
         run: cargo test --verbose
