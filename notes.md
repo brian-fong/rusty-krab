@@ -608,7 +608,7 @@ server on the right port and connect to our Postgres database using
 the right connection string.
 
 ### Query Macros
-The `sqlx::query!` macro takes in a string literal representing a SQl
+The `sqlx::query!` macro takes in a string literal representing a SQL
 query and returns an anonymous record type: a struct defined at
 compile-time whose members represent the columns of the table
 (`result.email` for the email column).
@@ -616,8 +616,9 @@ compile-time whose members represent the columns of the table
 `DATABASE_URL` as an environmental variable containing the connection
 string in order to know where to find the database and execute SQL
 queries.
-- To define this environmental variable, we create a top-level `.env`
-  file, defining the `DATABASE_URL` variable.
+- To define this environmental variable, we create a top-level `.env` file,
+defining the `DATABASE_URL` variable. This saves us the hassle of re-exporting
+the environmental variable upon each run.
 - Note: it can be a bit dirty how we're saving the database URL
 (i.e. connection string) in two different places: `configuration.yaml`
 and `.env`. However, this is tolerable for now since
@@ -625,3 +626,157 @@ and `.env`. However, this is tolerable for now since
 the runtime behavior of our application after compilation; whereas
 `.env` will be used only for development processes, building, and
 testing.
+
+### Writing New Subscriber to Database
+Within our `valid_form` test, we used `reqwest` to create an HTTP client and
+be able to send POST requests to our `/subscriptions` endpoint with the
+subscriber's info (name + email) encoded into the body. After we send the POST
+request to save a new subscriber to the database, we use the `sqlx::query!`
+macro to read the first entry from the `subscriptions` table, and finally check
+if the name and email of the subscription is equivalent to that encoded in the
+body of our POST request. However, we have not implemented the actual
+functionality of writing the subscription to our database, so our `valid_form`
+fails in its current state.
+
+Similar to reading from our database, we'll use the `sqlx::query!` macro, except
+instead of SELECT, we'll use the INSERT query to create a new entry in our
+`subscriptions` table.
+
+#### Actix-Web: Application State
+So far our application has been entirely stateless: our handlers work solely
+with data from incoming requests. `actix-web` provides us with the `app_data`
+method to save data that isn't attached to the lifecycle of a single incoming
+request. In our case, we want to register a `PgConnection` as part of our
+application state.
+```rust
+let server = HttpServer::new(move || {
+    App::new()
+        .wrap(Logger::default())
+        .route("/check_health", web::get().to(check_health))
+        .route("/subscriptions", web::post().to(subscriptions))
+        .app_data(pool.clone())
+})
+```
+However, the above will return an error since `HttpServer` expects
+`PgConnection` to be cloneable, which it isn't. Let's inspect how `HttpServer`
+works:
+- `HttpServer` does not take an `App` struct as an argument, instead, it takes a
+*closure that returns an `App` struct*. This design is meant to support the
+`actix-web` runtime model where a worker process is created for each core on our
+machine. Each worker runs its own copy of the application built by `HttpServer`,
+calling the same closure we passed in as an argument into `HttpServer::new()`.
+For this reason, `PgConnection` needs to be cloneable. However, `PgConnection`
+cannot be made cloneable because it sits on top of a non-cloneable system
+resource: a TCP connection with Postgres.
+
+We can use `web::Data` to wrap our connection in an *atomic reference control
+pointer (Arc)*. Using an `Arc`, each instance of our app will receive a pointer
+to `PgConnection` instead of its own copy.
+- `Arc<T>` is always cloneable. Cloning an `Arc` increments the number of active
+  references, providing a new copy of the memory address of the wrapped value.
+- With this, handlers can now access the application state using the same
+extractor.
+```rust
+let connection = web::Data::new(connection);
+let server = HttpServer::new(move || {
+    App::new()
+        .route("/health_check", web::get().to(health_check))
+        .route("/subscriptions", web::post().to(subscribe))
+        .app_data(connection.clone())
+})
+```
+
+We'll also need to modify our handler using the `web::Data` extractor.
+```rust
+pub async fn subscribe(
+    _form: web::Form<FormData>,
+    _connection: web::Data<PgConnection>,
+) -> HttpResponse {
+    HttpResponse::Ok().finish()
+}
+```
+- Note: `actix-web` uses a *type-map* to represent its application state: a
+`HashMap` struct that stores arbitrary data against some unique type identifier.
+- This process might be referred to as *dependency injection* in other
+languages.
+> 
+At this point, we may attempt to use `sqlx::query!` macro and INSERT a new
+entry into our `subscriptions` table. Unfortunately, we're coding in Rust so of
+course we run into another trait error: `PgConnection` does not implement the
+`Executor` trait, which is needed by the `execute` method.
+- Note: `&PgConnection` does not implement `Executor`, but `&mut PgConnection`
+does.
+- Why does `sqlx` require `PgConnection` to implement the `Executor` trait? The
+answer is because `sqlx` is an asynchronous interface: it does not allow
+multiple queries concurrently over the same database connection. And in order to
+fulfill this policy, `sqlx` requires a mutable reference to `PgConnection`.
+Given the purposeful restraints behind the Rust compiler, there cannot be two
+active mutable references to the same value at the same time throughout the
+program.
+    - In this sense, we can think of mutable references as unique.
+
+We may have designed ourselves into a corner as `web::Data` does not provide a
+mutable references to the application state. Alternatively, we could [interior
+mutability in Rust](https://doc.rust-lang.org/book/ch15-05-interior-mutability.html), which would allow us to mutate data even when there are immutable references to that data. e.g. We could put `PgConnection` behind a lock (`Mutex`) would allow us to synchronize access to the TCP socket and obtain a mutable reference to the wrapped connection once the lock has been acquired. This
+approach is not ideal as it limits us to run at most one query at once.
+
+Let's take a look at the `Executor` trait on the `sqlx` documentation and see
+what structs implement it. It turns out the `PgPool` struct is our answer! A
+pool of connections to a Postgres database.
+- For every query using `PgPool`, `sqlx` will either wait to borrow, or create,
+a `PgConnection` from the pool and execute the query.
+
+At this point, the book goes through the following steps:
+- Replace `PgConnection` with `PgPool`.
+- Refactor `spawn_app` to return a custom `TestApp` struct.
+- Update tests accordingly
+
+### Test Isolation
+At this point, running `cargo test` should run error-free. However, subsequent
+`cargo test`-ing would result in a `500 INTERNAL_SERVER_ERROR`: duplicate key
+value regarding the email address. This error occurs as a result of defining 
+the schema with a UNIQUE constraint on the email column.
+- Our database works as if it were a giant global variable: all our tests are
+interacting with the database and whatever changes that are left behind are
+exposed to other tests within the suite as well as subsequent test runs.
+
+As a principle rule of thumb, we don't want *any* kind of interaction between
+tests as this would make test runs non-deterministic, leading to spurious test
+failures that can be increasingly tricky to troubleshoot.
+
+There are 2 techniques to ensure test isolation when interacting with a
+relational database:
+1. Wrap the whole test in a SQL transaction and rollback at the end.
+2. Spin up a new database for each integration test.
+
+#1 is considered more elegant and faster; however, it is tricky to
+implement in our case since our app would need to borrow a `PgConnection`
+from a `PgPool`, but we have no way to "capture" that connection within a
+SQL transaction context. So, we'll go with #2 instead: before each test,
+we'll create a new database and run migrations on it.
+
+At this point, our database connection string is the same for all tests as
+it uses the `database_name` specified in our `configuration.yaml` file. In
+order to create a new database, we need a new (and unique) connection
+string. Let's create one by randomizing it using the `Uuid::new_v4()`
+function. 
+
+We're now able to generate new, unique connection strings, but we won't be
+able to actually connect to the database; we have to initialize the
+database first. To do so, let's create an alternative connection string,
+ommitting the randomized database name. This connection string allows us to
+connect to a Postgres instance in general, not to a specific database yet.
+From there, we can create the database we need and then run migrations on
+it.
+
+To create the new database, we write a new function `configure_database`
+which runs the SQL command: CREATE DATABASE. Afterwards, we use the
+`sqlx::migrate!` macro to run our migrations.
+- Note: the `migrate!` macro allows us to avoid using bash scripts with
+`sqlx migrate run`.
+
+At this point, our tests should all pass successfully, and continue to do
+so after subsequent runs.
+- We could add a "clean-up step" where we delete the Postgres instances
+created from each test run. But we'll skip this step for now.
+
