@@ -1,5 +1,5 @@
 use crate::configuration::{get_config, DatabaseSettings};
-use crate::routes::{check_health, subscriptions};
+use crate::routes::{check_health, subscribe};
 use crate::telemetry::{get_tracing_subscriber, init_tracing_subscriber};
 use actix_web::dev::Server;
 use actix_web::middleware::Logger;
@@ -32,7 +32,7 @@ pub fn start(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Err
         App::new()
             .wrap(Logger::default())
             .route("/check_health", web::get().to(check_health))
-            .route("/subscriptions", web::post().to(subscriptions))
+            .route("/subscriptions", web::post().to(subscribe))
             .app_data(pool.clone())
     })
     .listen(listener)?
