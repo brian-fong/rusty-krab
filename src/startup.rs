@@ -5,6 +5,7 @@ use actix_web::dev::Server;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use once_cell::sync::Lazy;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 use uuid::Uuid;
@@ -62,7 +63,7 @@ pub async fn start_background() -> TestApp {
 
 pub async fn init_db(config: &DatabaseSettings) -> PgPool {
     // Create database
-    let mut connection = PgConnection::connect(&config.cstring_alt())
+    let mut connection = PgConnection::connect(&config.cstring_alt().expose_secret())
         .await
         .expect("Failed to connect to Postgres");
 
@@ -72,7 +73,7 @@ pub async fn init_db(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database");
 
     // Migrate database
-    let pool = PgPool::connect(&config.cstring())
+    let pool = PgPool::connect(&config.cstring().expose_secret())
         .await
         .expect("Failed to connect to Postgres");
     sqlx::migrate!("./migrations")
