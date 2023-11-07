@@ -1,11 +1,25 @@
 use crate::configuration::{get_config, DatabaseSettings};
 use crate::routes::{check_health, subscriptions};
+use crate::telemetry::{get_tracing_subscriber, init_tracing_subscriber};
 use actix_web::dev::Server;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
-use sqlx::{PgPool, PgConnection, Connection, Executor};
-use uuid::Uuid;
+use once_cell::sync::Lazy;
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
+use uuid::Uuid;
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let name = String::from("test");
+    let env_filter = String::from("debug");
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber = get_tracing_subscriber(name, env_filter, std::io::stdout);
+        init_tracing_subscriber(subscriber);
+    } else {
+        let subscriber = get_tracing_subscriber(name, env_filter, std::io::sink);
+        init_tracing_subscriber(subscriber);
+    }
+});
 
 pub struct TestApp {
     pub address: String,
@@ -27,6 +41,9 @@ pub fn start(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Err
 }
 
 pub async fn start_background() -> TestApp {
+    // Initialize tracing
+    Lazy::force(&TRACING);
+
     // Assign TCP socket to 0 port
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());
@@ -37,8 +54,7 @@ pub async fn start_background() -> TestApp {
     let pool = init_db(&config.database).await;
 
     // Start server
-    let server = start(listener, pool.clone())
-        .expect("Failed to start server");
+    let server = start(listener, pool.clone()).expect("Failed to start server");
     let _ = tokio::spawn(server);
 
     TestApp { address, pool }

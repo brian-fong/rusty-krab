@@ -780,3 +780,176 @@ so after subsequent runs.
 - We could add a "clean-up step" where we delete the Postgres instances
 created from each test run. But we'll skip this step for now.
 
+## Chapter 4 - Telemetry
+So far, we've successfully implemented a POST endpoint for subscriptions to
+our newsletter. In addition, we've written two black-box integration tests:
+(1) when valid form data is submitted and the data is saved to our
+database; and (2) when invalid form data is submitted and the API returns
+an Error 400.
+
+Should we deploy our application to a production environment now? 
+- The answer is not yet. Reason being is we're blind to what's going on
+when our application is running. In other words, our application is not
+*instrumented* yet, and we are not collecting any *telemetry data*, making
+us vulnerable to *unknown uknowns*.
+- More often than not, unknown unknowns are peculiar failure modes of the
+specific system we are working on, along with the indefinite randomness
+known as the "outside world".
+    - Examples includes unusual spikes in traffic, SQL transactions that
+    are left hanging while the database is undergoing some macroscopic
+    change, or when memory leaks occur as a result of no changes being
+    introduced over an extended period of time.
+
+*Telemetry data* refers to information that is collected automatically and
+may provide insight on the status of our application at a certain point in
+time.
+
+### Logging
+The go-to crate for logging in Rust is
+[log](https://docs.rs/log/latest/log/).
+
+The `log` crate provies 5 macros: `trace`, `debug`, `info`, `warn`, and
+`error`. These functions all emit some log record. The difference lies in
+which *log level* they are emitted in.
+- *trace* logs are the lowest level as they are often extremely verbose and
+  have low signal-to-noise ratios.
+- Order of log levels in increasing severity: *trace*, *debug*, *info*,
+*warn*, and *error*
+- When performing a fallible operation: on success we emit an info-level
+log record, whereas on failure we wmit an error-level log record.
+
+Conveniently, `actix-web` provides a [Logger middleware](https://docs.rs/actix-web/4.0.1/actix_web/middleware/struct.Logger.html)
+to emit a log record for every incoming request.
+- Middlewares are added using the `wrap` method on our `App` struct.
+
+Instrumentation is usually a *local* decision; it is enough to look at a
+function and evaluate what information deserves to be logged.
+
+At this point, we can launch our app with `cargo run` and try to send a
+simple request using `curl http://127.0.0.1:8000/checkhealth -v`. The
+result is nothing! No log records are emitted to the terminal.
+
+It turns out, there is also a *global* decision on how our application
+should handle logging in general: should logs be written to a file? printed
+to the terminal? sent to some remote machine over HTTP?
+- In our case, we want our logs printed to the terminal. In order to set
+this, we need to use the `set_logger` function, which takes in some
+implementation of the `Log` trait.
+- Note: not calling `set_logger` will result in all log records being
+discarded, which explains why none of our logs were shown in the terminal
+after we set up the logger middleware.
+
+For our `Log` implementation, we'll be using `env_logger`, which allows us
+to print all log records to the terminal.
+- `env_logger` looks at the `RUST_LOG` environmental variable to determine
+  what log level to display.
+
+Logging Practices
+- Log the start/end of any interactions with an external system
+- *Correlation ID* - Assign a UUID to each incoming request to correlate
+different log records that are related to the same request.
+
+At this point, although we are able to generate UUIDs for each incoming
+request, this ID is only accessible within our handler functions.
+Therefore, `actix-web`'s `Logger` middleware is unable to correlate any log
+records made outside of our handler, such as what status code our
+application returns to the user after they try to subscribe.
+
+Taking a step back at the same time to examine what we're doing: we're
+trying to examine the flow of our application, starting with each incoming
+HTTP request and breaking them down into tasks and sub-tasks. Each of these
+units of work have a *duration* (i.e. a start and an end) as well as some
+*context* (e.g. user's name and email), that is naturally shared by all its
+sub-units of work. Given this interpretation, it is obvious why we're
+struggling to accurately examine our application: we're using log records,
+isolated events, to capture tree-like processes. In conclusiong, *logs are
+the wrong abstraction*.
+
+### Tracing
+Instead of logs, we'll uses *traces*. Fortunately, we have the [tracing
+crate](https://docs.rs/tracing/latest/tracing/) to help us implement
+traces.
+
+Overview of tracing:
+- Tracing is a framework for implementing Rust programs to collect
+structured, event-based diagnostic information.
+- In asynchronous systems such as Tokio, using logs for diagnostics can be
+challenging. Individual tasks are handled on the same thread, which can
+lead to intermixing of associated log records, making it difficult to trace
+the logic flow.
+- Tracing expands upon traditional logging-style diagnostics by providing
+tools to record structured events with additional information about
+*temporality* and *causality*.
+- Unlike a log record, a span in tracing has a beginning and an end, may be
+entered/exited by the flow of execution, and may exist within a nested tree
+of similar spans.
+
+### Migrating from Logging to Tracing
+To migrate, we can effectively replace all `log` macros with `tracing`
+macros. As a result, we should get the same logs as we did before in our
+console. The reason why we're able to simply replace `log` with `tracing`
+is thanks to tracing's `log` feature, which we enabled in `Cargo.toml`.
+This feature ensures that every time an event or span is created, the
+correpsonding log record is emitted, allowing `log`'s loggers to pick up on
+it (`env_logger`, in our case).
+
+### Using `Span`
+Let's use `Span` to capture and represent a given HTTP request.
+
+We use the `tracing::info_span!` macro to create a new span and attach some
+values to its context: `request_id`, `form.email`, and `form.name`.
+- `tracing` allows storage of structured fields within our spans as a
+collection of key-value pairs.
+- prefixing the variable name with a `%` symbol tells `tracing` to use the
+  `Display` implementation of the variable for logging purposes.
+
+We then use the `.enter` method on our newly-created span to enter it.
+- `.enter` returns an instance of `Entered`, a *guard* variable
+representing the span. While the guard is up, all downstream spans and log
+records are registered as children of the entered span.
+- Once the guard variable is dropped, then the span will be exited.
+- This is a typical Rust pattern known as *Resouce Acquisition is
+Initializations* (RAII): the compiler keeps track of the lifetimes of all
+variables and when they go out of scope, then the compiler makes a call to
+their destructor, `Drop::drop`, which should release all resources owned by
+that variable.
+
+At this point, we can run `RUST_LOG=trace cargo run` to start our server
+and then send a POST request to our /subscriptions endpoint. We should see
+the trace logs and be able to follow the lifetime of our request.
+
+Reading span logs:
+- `->`: entering the span
+- `<-`: exiting the span
+- `--`: closing the span
+
+Note: we may enter/exit the span multiple times, but we may only close the
+span once.
+
+For our database query, the executor might have to poll its future several
+times to drive it to completion. While this future is idle, we may be
+making progress on other futures. With several futures running
+simultaneously, how do we avoid mixing their respective spans?
+- The best way is to have the span closely mimic the future's behavior:
+enter the span when the future is polled and exit when it is parked.
+- The `Instrument` trait, an extension trait for futures, helps us do
+exactly this by passing in the span as an argument.
+- Instrumenting our query involves creating a separate span, `query_span`
+dedicated to tracing the query to our database. After running `execute` on our `sqlx::query!` macro, we run the
+`instrument` method, passing in `query_span` as an argumnet.
+
+At this point, sending another POST request to our server, we should see
+several logs associated with our query ("Saving subscription to database"),
+where we enter and exit the query span. At some point, we'll finally see
+the event associated with our `sqlx::query` execution, followed by the
+closing (`--`) of our query span.
+- The duplicate logs reflect how many times our query future has been
+polled by its executor until it reaches completion.
+
+### `tracing` Subscriber
+It turns out that only the first log contains the UUID representing our
+request ID. In order for our request ID to be stored within the span, we
+need to replace `env_logger` with a tracing-native solution.
+
+We'll be using the `tracing-subscriber` crate to preserve the structure we created for our
+request spans.

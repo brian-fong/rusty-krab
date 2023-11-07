@@ -16,8 +16,8 @@ pub async fn subscriptions(form: web::Form<FormData>, pool: web::Data<PgPool>) -
     let request_span = tracing::info_span!(
         "Adding new subscription",
         %request_id,
-        subscriber_email = %form.email,
-        subscriber_name = %form.name,
+        email = %form.email,
+        name = %form.name,
     );
 
     let _span_guard = request_span.enter();
