@@ -1,4 +1,4 @@
-name: zero-to-production
+name: rusty-krab
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
   SQLX_FEATURES: "rustls,postgres"
 
 jobs:
-  actix_web_test:
+  cargo_test:
     runs-on: ubuntu-latest
 
     # services:
