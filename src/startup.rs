@@ -2,11 +2,11 @@ use crate::configuration::{get_config, DatabaseSettings};
 use crate::routes::{check_health, subscribe};
 use crate::telemetry::{get_tracing_subscriber, init_tracing_subscriber};
 use actix_web::dev::Server;
-use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use once_cell::sync::Lazy;
 use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+use tracing_actix_web::TracingLogger;
 use std::net::TcpListener;
 use uuid::Uuid;
 
@@ -31,7 +31,7 @@ pub fn start(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Err
     let pool = web::Data::new(pool);
     let server = HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
+            .wrap(TracingLogger::default())
             .route("/check_health", web::get().to(check_health))
             .route("/subscriptions", web::post().to(subscribe))
             .app_data(pool.clone())
