@@ -1,14 +1,15 @@
-FROM rust:1.72
-
+# ===== Build =====
+FROM rust:1.72 AS build
 WORKDIR /app
-
 RUN apt update && apt install lld clang -y
-
 COPY . .
-
 ENV SQLX_OFFLINE true
-ENV APP_ENVIRONMENT production
-
 RUN cargo build --release
 
-ENTRYPOINT ["./target/release/rusty-krab"]
+# ===== Run =====
+FROM rust:1.72 AS run
+WORKDIR /app
+COPY --from=build /app/target/release/rusty-krab rusty-krab
+COPY configuration configuration
+ENV APP_ENVIRONMENT production
+ENTRYPOINT ["./rusty-krab"]

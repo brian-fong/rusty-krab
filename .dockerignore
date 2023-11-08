@@ -2,5 +2,10 @@
 target/
 tests/
 scripts/
-migrations/
+# migrations/
 Dockerfile
+
+rusty-krab-z2p-logo.png
+experimental.md
+notes.md
+README.md
