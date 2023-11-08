@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # URL="http://127.0.0.1:8000/check_health"
-URL="http://127.0.0.1:8000/subscriptions"
+# URL="http://127.0.0.1:8000/subscriptions"
+URL="https://rusty-krab-zd9o8.ondigitalocean.app/subscriptions"
 
 echo
 echo "Sending request: ${URL}..."
