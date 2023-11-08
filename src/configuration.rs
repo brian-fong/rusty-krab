@@ -3,8 +3,14 @@ use secrecy::{ExposeSecret, Secret};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct Settings {
+    pub application: ApplicationSettings,
     pub database: DatabaseSettings,
-    pub app_port: u16,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct ApplicationSettings {
+    pub port: u16,
+    pub host: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -16,14 +22,49 @@ pub struct DatabaseSettings {
     pub db_name: String,
 }
 
+pub enum Environment {
+    Local,
+    Production,
+}
+
+impl Environment {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Environment::Local => "local",
+            Environment::Production => "production",
+        }
+    }
+}
+
+impl TryFrom<String> for Environment {
+    type Error = String;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        match s.to_lowercase().as_str() {
+            "local" => Ok(Self::Local),
+            "production" => Ok(Self::Production),
+            other => Err(format!(
+                "{} is not a supported environment. Use either 'local' or 'production'",
+                other
+            )),
+        }
+    }
+}
+
 pub fn get_config() -> Result<Settings, config::ConfigError> {
-    // Initialize configuration reader
     let mut settings = config::Config::default();
+    let current_dir = std::env::current_dir().expect("Failed to determine current directory");
+    let config_dir = current_dir.join("configuration");
 
-    // Read configuration file named "configuration"
-    settings.merge(config::File::with_name("configuration"))?;
+    settings.merge(config::File::from(config_dir.join("base")).required(true))?;
 
-    // (Try to) convert values from configuration file into resulting type
+    let environment: Environment = std::env::var("APP_ENVIRONMENT")
+        .unwrap_or_else(|_| "local".into())
+        .try_into()
+        .expect("Failed to parse APP_ENVIRONMENT");
+
+    settings.merge(config::File::from(config_dir.join(environment.as_str())).required(true))?;
+
     settings.try_into()
 }
 
