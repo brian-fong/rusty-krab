@@ -58,6 +58,7 @@ impl TryFrom<String> for Environment {
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
     let mut settings = config::Config::default();
+
     let current_dir = std::env::current_dir().expect("Failed to determine current directory");
     let config_dir = current_dir.join("configuration");
 
