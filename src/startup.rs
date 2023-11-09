@@ -4,7 +4,6 @@ use crate::telemetry::{get_tracing_subscriber, init_tracing_subscriber};
 use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
 use once_cell::sync::Lazy;
-use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use tracing_actix_web::TracingLogger;
 use std::net::TcpListener;
@@ -63,7 +62,7 @@ pub async fn start_background() -> TestApp {
 
 pub async fn init_db(config: &DatabaseSettings) -> PgPool {
     // Create database
-    let mut connection = PgConnection::connect(&config.cstring_alt().expose_secret())
+    let mut connection = PgConnection::connect_with(&config.without_db())
         .await
         .expect("Failed to connect to Postgres");
 
@@ -73,7 +72,7 @@ pub async fn init_db(config: &DatabaseSettings) -> PgPool {
         .expect("Failed to create database");
 
     // Migrate database
-    let pool = PgPool::connect(&config.cstring().expose_secret())
+    let pool = PgPool::connect_with(config.with_db())
         .await
         .expect("Failed to connect to Postgres");
     sqlx::migrate!("./migrations")

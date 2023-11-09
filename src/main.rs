@@ -1,7 +1,6 @@
 use rusty_krab::configuration::get_config;
 use rusty_krab::startup::start;
 use rusty_krab::telemetry::{get_tracing_subscriber, init_tracing_subscriber};
-use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 
@@ -19,8 +18,7 @@ async fn main() -> std::io::Result<()> {
 
     let pool = PgPoolOptions::new()
         .connect_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(&config.database.cstring().expose_secret())
-        .expect("Failed to connect to Postgres");
+        .connect_lazy_with(config.database.with_db());
 
     tracing::info!("Starting server: [http://{}]...", addr);
     start(listener, pool)?.await
