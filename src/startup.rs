@@ -55,7 +55,7 @@ pub async fn start_background() -> TestApp {
 
     // Start server
     let server = start(listener, pool.clone()).expect("Failed to start server");
-    let _ = tokio::spawn(server);
+    tokio::spawn(server);
 
     TestApp { address, pool }
 }

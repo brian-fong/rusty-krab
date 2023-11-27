@@ -1,7 +1,7 @@
 use rusty_krab::startup::start_background;
 
 #[tokio::test]
-async fn valid_form() {
+async fn valid_fields() {
     // Start server
     let app = start_background().await;
 
@@ -31,7 +31,7 @@ async fn valid_form() {
 }
 
 #[tokio::test]
-async fn invalid_form() {
+async fn missing_fields() {
     // Start server
     let app = start_background().await;
 
@@ -40,6 +40,34 @@ async fn invalid_form() {
         ("name=le%20guin", "missing email"),
         ("email=ursula_le_guin%40gmail.com", "missing name"),
         ("", "missing name and email"),
+    ];
+
+    // (Attempt to) Create subscriptions
+    let client = reqwest::Client::new();
+    for (body, err_msg) in test_cases {
+        let response = client
+            .post(format!("{}/subscriptions", &app.address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(body)
+            .send()
+            .await
+            .expect("Failed to send POST request");
+
+        // Check for unsuccesful creation
+        assert_eq!(400, response.status().as_u16(), "{}", err_msg);
+    }
+}
+
+#[tokio::test]
+async fn empty_fields() {
+    // Start server
+    let app = start_background().await;
+
+    // Assign test cases
+    let test_cases = vec![
+        ("name=brian&20fong&email=", "empty email"),
+        ("name&email=0xfrian%40gmail.com", "empty name"),
+        ("name=jonathan&email=sus-email", "invalid email"),
     ];
 
     // (Attempt to) Create subscriptions
