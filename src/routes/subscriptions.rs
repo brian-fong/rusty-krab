@@ -3,12 +3,22 @@ use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::{SubscriberName, Subscriber, SubscriberEmail};
+use crate::domain::{Subscriber, SubscriberEmail, SubscriberName};
 
 #[derive(serde::Deserialize)]
-pub struct FormData {
+pub struct SubscriberForm {
     email: String,
     name: String,
+}
+
+impl TryFrom<SubscriberForm> for Subscriber {
+    type Error = String;
+
+    fn try_from(form: SubscriberForm) -> Result<Self, Self::Error> {
+        let email = SubscriberEmail::parse(form.email)?;
+        let name = SubscriberName::parse(form.name)?;
+        Ok(Self { email, name })
+    }
 }
 
 #[tracing::instrument(
@@ -19,20 +29,13 @@ pub struct FormData {
         name = %form.name,
     )
 )]
-pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
-    let email = match SubscriberEmail::parse(form.0.email) {
-        Ok(email) => email,
+pub async fn subscribe(form: web::Form<SubscriberForm>, pool: web::Data<PgPool>) -> HttpResponse {
+    let subscriber = match form.0.try_into() {
+        Ok(subscriber) => subscriber,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
 
-    let name = match SubscriberName::parse(form.0.name) {
-        Ok(name) => name,
-        Err(_) => return HttpResponse::BadRequest().finish(),
-    };
-
-    let new_subscriber = Subscriber { email, name };
-
-    match insert_subscriber(&new_subscriber, &pool).await {
+    match insert_subscriber(&subscriber, &pool).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
             tracing::error!("Request #{}: failed to execute query", e);

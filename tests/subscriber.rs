@@ -44,7 +44,23 @@ mod name {
 
 mod email {
     use claim::assert_err;
+    use fake::{faker::internet::en::SafeEmail, Fake};
     use rusty_krab::domain::SubscriberEmail;
+
+    #[derive(Debug, Clone)]
+    struct ValidEmailFixture(pub String);
+
+    impl quickcheck::Arbitrary for ValidEmailFixture {
+        fn arbitrary<G: quickcheck::Gen>(g: &mut G) -> Self {
+            let email = SafeEmail().fake_with_rng(g);
+            Self(email)
+        }
+    }
+
+    #[quickcheck_macros::quickcheck]
+    fn emails_valid(email: ValidEmailFixture) -> bool {
+        SubscriberEmail::parse(email.0).is_ok()
+    }
 
     #[test]
     fn email_empty() {
