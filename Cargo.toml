@@ -11,6 +11,7 @@ path = 'src/main.rs'
 name = "rusty-krab"
 
 [dev-dependencies]
+claim = "0.5"
 reqwest = "0.11"
 
 [dependencies]
@@ -28,7 +29,9 @@ tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1"
 tracing-subscriber = { version = "0.3", features = [ "registry",
   "env-filter" ] }
+unicode-segmentation = "1"
 uuid = { version = "0.8.1", features = ["v4"] }
+validator = "0.14"
 
 [dependencies.sqlx]
 version = "0.5.7"
