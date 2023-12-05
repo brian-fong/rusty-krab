@@ -6,4 +6,3 @@ database:
   username: "postgres"
   password: "password"
   db_name: "newsletter"
-

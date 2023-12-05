@@ -5,8 +5,8 @@ use actix_web::dev::Server;
 use actix_web::{web, App, HttpServer};
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use tracing_actix_web::TracingLogger;
 use std::net::TcpListener;
+use tracing_actix_web::TracingLogger;
 use uuid::Uuid;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
@@ -26,7 +26,10 @@ pub struct TestApp {
     pub pool: PgPool,
 }
 
-pub fn start(listener: TcpListener, pool: PgPool) -> Result<Server, std::io::Error> {
+pub fn start(
+    listener: TcpListener,
+    pool: PgPool,
+) -> Result<Server, std::io::Error> {
     let pool = web::Data::new(pool);
     let server = HttpServer::new(move || {
         App::new()
@@ -44,7 +47,7 @@ pub async fn start_background() -> TestApp {
     // Initialize tracing
     Lazy::force(&TRACING);
 
-    // Assign TCP socket to 0 port
+    // Initialize TCP socket listening on 0 port
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = format!("http://{}", listener.local_addr().unwrap());
 
