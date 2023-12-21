@@ -2,9 +2,9 @@ name: rusty-krab
 
 on:
   push:
-    branches: [ "z2p" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "z2p" ]
+    branches: [ "main" ]
 
 env:
   CARGO_TERM_COLOR: always
