@@ -1,0 +1,9 @@
+# Ignore target directory
+/target
+.env
+
+# Ignore todo
+experimental.md
+
+# Scripts
+connect_postgres_digitalocean.sh

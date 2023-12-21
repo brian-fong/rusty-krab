@@ -1,0 +1,11 @@
+.env
+target/
+tests/
+scripts/
+migrations/
+Dockerfile
+
+rusty-krab-z2p-logo.png
+experimental.md
+notes.md
+README.md
