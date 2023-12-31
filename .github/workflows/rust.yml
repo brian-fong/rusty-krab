@@ -15,15 +15,15 @@ jobs:
   cargo_test:
     runs-on: ubuntu-latest
 
-    # services:
-    #   postgres:
-    #     image: postgres:14
-    #     env:
-    #       POSTGRES_USER: postgres
-    #       POSTGRES_PASSWORD: password
-    #       POSTGRES_DB: newsletter
-    #     ports:
-    #       - 5432:5432
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: newsletter
+        ports:
+          - 5432:5432
 
     steps:
       - name: Checkout branch
@@ -53,8 +53,7 @@ jobs:
       - name: Initialize postgres database
         run: |
           chmod +x ./scripts/init_db.sh
-          ./scripts/init_db.sh
-          # SKIP_DOCKER=true ./scripts/init_db.sh
+          SKIP_DOCKER=true ./scripts/init_db.sh
 
       - name: Run tests
         run: cargo test
