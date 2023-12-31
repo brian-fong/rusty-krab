@@ -3,7 +3,4 @@ target/
 tests/
 scripts/
 Dockerfile
-
-rusty-krab-z2p-logo.png
-notes.md
 README.md
