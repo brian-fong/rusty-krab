@@ -1,6 +1,5 @@
 # Ignore target directory
 /target
-.env
 
 # Ignore todo
 experimental.md
