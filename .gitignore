@@ -1,8 +1,8 @@
 # Ignore target directory
 /target
 
-# Ignore todo
-experimental.md
+# Ignore personal notes
+notes.md
 
 # Scripts
 connect_postgres_digitalocean.sh
