@@ -1,6 +1,9 @@
-.env
+.github/
 target/
 tests/
 scripts/
+
+.env
 Dockerfile
+notes.md
 README.md
