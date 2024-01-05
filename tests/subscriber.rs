@@ -1,5 +1,5 @@
 #[cfg(test)]
-mod name {
+mod subscriber_name {
     use claim::{assert_err, assert_ok};
     use rusty_krab::domain::SubscriberName;
 
@@ -42,7 +42,7 @@ mod name {
     }
 }
 
-mod email {
+mod subscriber_email {
     use claim::assert_err;
     use fake::{faker::internet::en::SafeEmail, Fake};
     use rusty_krab::domain::SubscriberEmail;

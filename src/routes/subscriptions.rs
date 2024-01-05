@@ -29,7 +29,10 @@ impl TryFrom<SubscriberForm> for Subscriber {
         name = %form.name,
     )
 )]
-pub async fn subscribe(form: web::Form<SubscriberForm>, pool: web::Data<PgPool>) -> HttpResponse {
+pub async fn subscribe(
+    form: web::Form<SubscriberForm>,
+    pool: web::Data<PgPool>,
+) -> HttpResponse {
     let subscriber = match form.0.try_into() {
         Ok(subscriber) => subscriber,
         Err(_) => return HttpResponse::BadRequest().finish(),
@@ -38,17 +41,23 @@ pub async fn subscribe(form: web::Form<SubscriberForm>, pool: web::Data<PgPool>)
     match insert_subscriber(&subscriber, &pool).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
-            tracing::error!("Request #{}: failed to execute query", e);
+            tracing::error!(
+                "Request #{}: failed to execute query",
+                e
+            );
             HttpResponse::InternalServerError().finish()
         }
     }
 }
 
 #[tracing::instrument(
-    name = "Inserting subscriber info into database",
+    name = "Inserting subscriber into database",
     skip(subscriber, pool)
 )]
-pub async fn insert_subscriber(subscriber: &Subscriber, pool: &PgPool) -> Result<(), sqlx::Error> {
+pub async fn insert_subscriber(
+    subscriber: &Subscriber,
+    pool: &PgPool,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO subscriptions(id, email, name, subscribed_at)
