@@ -1,8 +1,10 @@
 use rusty_krab::configuration::get_config;
+use rusty_krab::email_client::EmailClient;
 use rusty_krab::startup::start;
 use rusty_krab::telemetry::{get_tracing_subscriber, init_tracing_subscriber};
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
+
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -15,6 +17,17 @@ async fn main() -> std::io::Result<()> {
     // Read configuration file
     let config = get_config().expect("Failed to read configuration");
 
+    // Build email client
+    let sender_email =  config.email_client.sender()
+        .expect("Invalid sender email address");
+    let timeout = config.email_client.timeout();
+    let email_client = EmailClient::new(
+        config.email_client.auth_token,
+        config.email_client.base_url,
+        sender_email,
+        timeout,
+    );
+
     // Initialize TCP socket at configured port
     let addr = format!("{}:{}", config.application.host, config.application.port);
     let listener = TcpListener::bind(&addr)?;
@@ -26,34 +39,7 @@ async fn main() -> std::io::Result<()> {
 
     // Start server
     tracing::info!("Starting server: [http://{}]...", addr);
-    start(listener, pool)?.await?;
+    start(listener, pool, email_client)?.await?;
 
     Ok(())
 }
-
-// use resend_client_rs::{emails::SendEmailRequest, Client};
-//
-// #[tokio::main]
-// async fn main() {
-//     println!("Sending email...");
-//     let client = Client::new("re_Y2SopCQo_FwbPFpTkWw5KXFLMxWo4a72m");
-//     let response = client
-//         .email_service
-//         .send(&SendEmailRequest {
-//             subject: "hello world!".to_string(),
-//             from: "frian <hello@brian-fong.com>".to_string(),
-//             to: vec!["168jonathan@gmail.com".to_string()],
-//             cc: None,
-//             bcc: None,
-//             reply_to: None,
-//             html: Some(
-//                 "<p>this email was sent from a resend client written in rust!</p>".to_string(),
-//             ),
-//             text: Some("this email was sent from a resend client written in rust!".to_string()),
-//             tags: None,
-//             attachments: None,
-//             headers: None,
-//         })
-//         .await;
-//     println!("Response: {:#?}", response);
-// }

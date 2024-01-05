@@ -3,10 +3,32 @@ use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::{postgres::{PgConnectOptions, PgSslMode}, ConnectOptions};
 
-#[derive(Debug, serde::Deserialize)]
+use crate::domain::SubscriberEmail;
+
+
+#[derive(serde::Deserialize)]
 pub struct Settings {
     pub application: ApplicationSettings,
     pub database: DatabaseSettings,
+    pub email_client: EmailClientSettings,
+}
+
+#[derive(serde::Deserialize)]
+pub struct EmailClientSettings {
+    pub auth_token: Secret<String>,
+    pub base_url: String,
+    pub sender_email: String,
+    pub timeout_ms: u64,
+}
+
+impl EmailClientSettings {
+    pub fn sender(&self) -> Result<SubscriberEmail, String> {
+        SubscriberEmail::parse(self.sender_email.clone())
+    }
+
+    pub fn timeout(&self) -> std::time::Duration {
+        std::time::Duration::from_millis(self.timeout_ms)
+    }
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -57,20 +79,26 @@ impl TryFrom<String> for Environment {
 }
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
+    // Initialize configuration settings
     let mut settings = config::Config::default();
 
+    // Get current directory + configuration directory
     let current_dir = std::env::current_dir().expect("Failed to determine current directory");
     let config_dir = current_dir.join("configuration");
 
+    // Merge in base configuration properties
     settings.merge(config::File::from(config_dir.join("base")).required(true))?;
 
+    // Read app environment (default to "local")
     let environment: Environment = std::env::var("APP_ENVIRONMENT")
         .unwrap_or_else(|_| "local".into())
         .try_into()
         .expect("Failed to parse APP_ENVIRONMENT");
 
+    // Merge in environmental configuration properties
     settings.merge(config::File::from(config_dir.join(environment.as_str())).required(true))?;
 
+    // Merge in Digital Ocean environmental variables
     settings.merge(config::Environment::with_prefix("app").separator("__"))?;
 
     settings.try_into()

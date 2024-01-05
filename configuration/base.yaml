@@ -1,8 +1,13 @@
 application: 
   port: 8000
 database: 
-  host: localhost
+  host: "localhost"
   port: 5432
   username: "postgres"
   password: "password"
   db_name: "newsletter"
+email_client:
+  auth_token: "7b70093e-070d-4376-83b5-2f55777ec0bc"
+  base_url: "localhost"
+  sender_email: "test@gmail.com"
+  timeout_ms: "5000"
