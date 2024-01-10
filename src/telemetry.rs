@@ -1,11 +1,7 @@
 use tracing::{subscriber::set_global_default, Subscriber};
-use tracing_bunyan_formatter::{
-    BunyanFormattingLayer, JsonStorageLayer,
-};
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
-use tracing_subscriber::{
-    fmt::MakeWriter, layer::SubscriberExt, EnvFilter, Registry,
-};
+use tracing_subscriber::{fmt::MakeWriter, layer::SubscriberExt, EnvFilter, Registry};
 
 pub fn get_tracing_subscriber<Sink>(
     name: String,
@@ -20,15 +16,10 @@ where
 
     let formatting_layer = BunyanFormattingLayer::new(name, sink);
 
-    Registry::default()
-        .with(env_filter)
-        .with(JsonStorageLayer)
-        .with(formatting_layer)
+    Registry::default().with(env_filter).with(JsonStorageLayer).with(formatting_layer)
 }
 
-pub fn init_tracing_subscriber(
-    subscriber: impl Subscriber + Send + Sync,
-) {
+pub fn init_tracing_subscriber(subscriber: impl Subscriber + Send + Sync) {
     LogTracer::init().expect("Failed to set logger");
     set_global_default(subscriber).expect("Failed to set subscriber");
 }
