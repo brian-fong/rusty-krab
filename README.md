@@ -1,5 +1,3 @@
-![rusty-krab logo](rusty-krab-z2p-logo.png)
-
 This repository documents my efforts at trying to learn how to program in Rust. 
 
 ### References
