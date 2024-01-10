@@ -6,14 +6,14 @@ use sqlx::{postgres::{PgConnectOptions, PgSslMode}, ConnectOptions};
 use crate::domain::SubscriberEmail;
 
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub application: ApplicationSettings,
     pub database: DatabaseSettings,
     pub email_client: EmailClientSettings,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Deserialize)]
 pub struct EmailClientSettings {
     pub auth_token: Secret<String>,
     pub base_url: String,
@@ -31,14 +31,14 @@ impl EmailClientSettings {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct DatabaseSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
