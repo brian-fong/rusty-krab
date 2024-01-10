@@ -13,7 +13,7 @@ COPY . .
 ENV SQLX_OFFLINE true
 RUN cargo build --release --bin rusty-krab
 
-FROM debian:bullseye-slim AS run
+FROM debian:bookworm-slim AS run
 WORKDIR /app
 RUN apt-get update -y \
   && apt-get install -y --no-install-recommends openssl ca-certificates \
