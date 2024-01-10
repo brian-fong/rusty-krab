@@ -4,6 +4,6 @@ tests/
 scripts/
 
 .env
+app-spec.yaml
 Dockerfile
-notes.md
 README.md
