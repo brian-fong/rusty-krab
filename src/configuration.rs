@@ -1,10 +1,11 @@
+use crate::domain::SubscriberEmail;
 use config;
 use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::{postgres::{PgConnectOptions, PgSslMode}, ConnectOptions};
-
-use crate::domain::SubscriberEmail;
-
+use sqlx::{
+    postgres::{PgConnectOptions, PgSslMode},
+    ConnectOptions,
+};
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
@@ -36,6 +37,7 @@ pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
+    pub base_url: String,
 }
 
 #[derive(Clone, Debug, serde::Deserialize)]
@@ -79,28 +81,25 @@ impl TryFrom<String> for Environment {
 }
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
-    // Initialize configuration settings
-    let mut settings = config::Config::default();
-
-    // Get current directory + configuration directory
-    let current_dir = std::env::current_dir().expect("Failed to determine current directory");
+    let current_dir = std::env::current_dir()
+        .expect("Failed to determine current directory");
     let config_dir = current_dir.join("configuration");
 
-    // Merge in base configuration properties
-    settings.merge(config::File::from(config_dir.join("base")).required(true))?;
-
-    // Read app environment (default to "local")
+    let mut settings = config::Config::default();
+    settings.merge(
+        config::File::from(config_dir.join("base")).required(true),
+    )?;
     let environment: Environment = std::env::var("APP_ENVIRONMENT")
         .unwrap_or_else(|_| "local".into())
         .try_into()
         .expect("Failed to parse APP_ENVIRONMENT");
-
-    // Merge in environmental configuration properties
-    settings.merge(config::File::from(config_dir.join(environment.as_str())).required(true))?;
-
-    // Merge in Digital Ocean environmental variables
-    settings.merge(config::Environment::with_prefix("app").separator("__"))?;
-
+    settings.merge(
+        config::File::from(config_dir.join(environment.as_str()))
+            .required(true),
+    )?;
+    settings.merge(
+        config::Environment::with_prefix("app").separator("__"),
+    )?;
     settings.try_into()
 }
 
@@ -111,7 +110,6 @@ impl DatabaseSettings {
         } else {
             PgSslMode::Prefer
         };
-
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)

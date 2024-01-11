@@ -3,6 +3,7 @@ use secrecy::{Secret, ExposeSecret};
 
 use crate::domain::SubscriberEmail;
 
+#[derive(Debug)]
 pub struct EmailClient {
     auth_token: Secret<String>,
     base_url: String,
